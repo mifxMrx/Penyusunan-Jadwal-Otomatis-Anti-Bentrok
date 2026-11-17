@@ -1,0 +1,6 @@
+{
+  "name": "SiJaga Ujian — Jadwal Mengawas Anti-Bentrok",
+  "description": "Aplikasi penyusunan jadwal mengawas ujian sekolah otomatis anti-bentrok dengan fitur pratinjau, cetak, dan ekspor PDF ukuran A4.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
