@@ -66,7 +66,7 @@ export const TeachersView: React.FC<TeachersViewProps> = ({
 
   const getNextCode = (offset = 0) => {
     const num = teachers.length + 1 + offset;
-    return `G${String(num).padStart(2, '0')}`;
+    return String(num).padStart(2, '0');
   };
 
   const openCreateModal = () => {
@@ -386,7 +386,7 @@ export const TeachersView: React.FC<TeachersViewProps> = ({
                     required
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
-                    placeholder="G01"
+                    placeholder="01"
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono focus:border-blue-600 focus:outline-none"
                   />
                 </div>

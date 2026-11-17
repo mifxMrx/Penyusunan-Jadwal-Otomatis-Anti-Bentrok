@@ -213,7 +213,7 @@ export const PrintPreviewA4View: React.FC<PrintPreviewA4ViewProps> = ({
               disabled={printConfig.documentMode === 'per_teacher'}
               className="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 focus:border-blue-600 focus:outline-none disabled:opacity-50"
             >
-              <option value="code_with_legend">Kode Pengawas (G01, G02)</option>
+              <option value="code_with_legend">Kode Pengawas (01, 02)</option>
               <option value="full_name">Nama Lengkap Guru</option>
             </select>
           </div>

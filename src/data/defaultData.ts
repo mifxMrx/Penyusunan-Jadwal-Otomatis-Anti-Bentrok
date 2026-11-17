@@ -17,20 +17,20 @@ export const DEFAULT_IDENTITY: SchoolIdentity = {
 };
 
 export const DEFAULT_TEACHERS: Teacher[] = [
-  { id: 't1', code: 'G01', name: 'Budi Santoso, S.Pd.', nip: '198103122008011004', subjects: ['Matematika'], unavailableSessionIds: [], maxSessions: null, active: true, color: TEACHER_COLOR_PALETTE[0].hex },
-  { id: 't2', code: 'G02', name: 'Siti Aminah, M.Pd.', nip: '198307192009022003', subjects: ['Bahasa Indonesia'], unavailableSessionIds: [], maxSessions: null, active: true, color: TEACHER_COLOR_PALETTE[1].hex },
-  { id: 't3', code: 'G03', name: 'Hendra Wijaya, S.Pd.', nip: '198501252010011009', subjects: ['Bahasa Inggris'], unavailableSessionIds: ['s1'], maxSessions: null, active: true, color: TEACHER_COLOR_PALETTE[2].hex },
-  { id: 't4', code: 'G04', name: 'Dewi Lestari, S.Si.', nip: '198709042011012011', subjects: ['Fisika'], unavailableSessionIds: [], maxSessions: null, active: true, color: TEACHER_COLOR_PALETTE[3].hex },
-  { id: 't5', code: 'G05', name: 'Agus Pratama, S.Pd.', nip: '198811152014021002', subjects: ['Kimia'], unavailableSessionIds: [], maxSessions: null, active: true, color: TEACHER_COLOR_PALETTE[4].hex },
-  { id: 't6', code: 'G06', name: 'Nurul Hidayah, M.Pd.', nip: '198404282009032005', subjects: ['Biologi'], unavailableSessionIds: ['s6'], maxSessions: null, active: true, color: TEACHER_COLOR_PALETTE[5].hex },
-  { id: 't7', code: 'G07', name: 'Rizky Ramadhan, S.E.', nip: '199002102015031001', subjects: ['Ekonomi'], unavailableSessionIds: [], maxSessions: null, active: true, color: TEACHER_COLOR_PALETTE[6].hex },
-  { id: 't8', code: 'G08', name: 'Fitri Handayani, S.Sos.', nip: '198906172015042003', subjects: ['Sosiologi'], unavailableSessionIds: [], maxSessions: null, active: true, color: TEACHER_COLOR_PALETTE[7].hex },
-  { id: 't9', code: 'G09', name: 'Dedi Kurniawan, S.Pd.', nip: '198612032011011006', subjects: ['Sejarah'], unavailableSessionIds: [], maxSessions: null, active: true, color: TEACHER_COLOR_PALETTE[8].hex },
-  { id: 't10', code: 'G10', name: 'Maya Puspita, S.Pd.', nip: '199108212019032008', subjects: ['PPKn'], unavailableSessionIds: [], maxSessions: null, active: true, color: TEACHER_COLOR_PALETTE[9].hex },
-  { id: 't11', code: 'G11', name: 'Fajar Nugroho, S.Kom.', nip: '199205142019031004', subjects: ['Informatika'], unavailableSessionIds: [], maxSessions: null, active: true, color: TEACHER_COLOR_PALETTE[10].hex },
-  { id: 't12', code: 'G12', name: 'Lina Marlina, S.Ag.', nip: '198210092008012007', subjects: ['Pendidikan Agama'], unavailableSessionIds: [], maxSessions: null, active: true, color: TEACHER_COLOR_PALETTE[11].hex },
-  { id: 't13', code: 'G13', name: 'Yusuf Maulana, S.Pd.', nip: '199303182020121005', subjects: ['PJOK'], unavailableSessionIds: [], maxSessions: null, active: true, color: TEACHER_COLOR_PALETTE[12].hex },
-  { id: 't14', code: 'G14', name: 'Ratna Sari, S.Sn.', nip: '199401272020122009', subjects: ['Seni Budaya'], unavailableSessionIds: [], maxSessions: null, active: true, color: TEACHER_COLOR_PALETTE[13].hex },
+  { id: 't1', code: '01', name: 'Budi Santoso, S.Pd.', nip: '198103122008011004', subjects: ['Matematika'], unavailableSessionIds: [], maxSessions: null, active: true, color: TEACHER_COLOR_PALETTE[0].hex },
+  { id: 't2', code: '02', name: 'Siti Aminah, M.Pd.', nip: '198307192009022003', subjects: ['Bahasa Indonesia'], unavailableSessionIds: [], maxSessions: null, active: true, color: TEACHER_COLOR_PALETTE[1].hex },
+  { id: 't3', code: '03', name: 'Hendra Wijaya, S.Pd.', nip: '198501252010011009', subjects: ['Bahasa Inggris'], unavailableSessionIds: ['s1'], maxSessions: null, active: true, color: TEACHER_COLOR_PALETTE[2].hex },
+  { id: 't4', code: '04', name: 'Dewi Lestari, S.Si.', nip: '198709042011012011', subjects: ['Fisika'], unavailableSessionIds: [], maxSessions: null, active: true, color: TEACHER_COLOR_PALETTE[3].hex },
+  { id: 't5', code: '05', name: 'Agus Pratama, S.Pd.', nip: '198811152014021002', subjects: ['Kimia'], unavailableSessionIds: [], maxSessions: null, active: true, color: TEACHER_COLOR_PALETTE[4].hex },
+  { id: 't6', code: '06', name: 'Nurul Hidayah, M.Pd.', nip: '198404282009032005', subjects: ['Biologi'], unavailableSessionIds: ['s6'], maxSessions: null, active: true, color: TEACHER_COLOR_PALETTE[5].hex },
+  { id: 't7', code: '07', name: 'Rizky Ramadhan, S.E.', nip: '199002102015031001', subjects: ['Ekonomi'], unavailableSessionIds: [], maxSessions: null, active: true, color: TEACHER_COLOR_PALETTE[6].hex },
+  { id: 't8', code: '08', name: 'Fitri Handayani, S.Sos.', nip: '198906172015042003', subjects: ['Sosiologi'], unavailableSessionIds: [], maxSessions: null, active: true, color: TEACHER_COLOR_PALETTE[7].hex },
+  { id: 't9', code: '09', name: 'Dedi Kurniawan, S.Pd.', nip: '198612032011011006', subjects: ['Sejarah'], unavailableSessionIds: [], maxSessions: null, active: true, color: TEACHER_COLOR_PALETTE[8].hex },
+  { id: 't10', code: '10', name: 'Maya Puspita, S.Pd.', nip: '199108212019032008', subjects: ['PPKn'], unavailableSessionIds: [], maxSessions: null, active: true, color: TEACHER_COLOR_PALETTE[9].hex },
+  { id: 't11', code: '11', name: 'Fajar Nugroho, S.Kom.', nip: '199205142019031004', subjects: ['Informatika'], unavailableSessionIds: [], maxSessions: null, active: true, color: TEACHER_COLOR_PALETTE[10].hex },
+  { id: 't12', code: '12', name: 'Lina Marlina, S.Ag.', nip: '198210092008012007', subjects: ['Pendidikan Agama'], unavailableSessionIds: [], maxSessions: null, active: true, color: TEACHER_COLOR_PALETTE[11].hex },
+  { id: 't13', code: '13', name: 'Yusuf Maulana, S.Pd.', nip: '199303182020121005', subjects: ['PJOK'], unavailableSessionIds: [], maxSessions: null, active: true, color: TEACHER_COLOR_PALETTE[12].hex },
+  { id: 't14', code: '14', name: 'Ratna Sari, S.Sn.', nip: '199401272020122009', subjects: ['Seni Budaya'], unavailableSessionIds: [], maxSessions: null, active: true, color: TEACHER_COLOR_PALETTE[13].hex },
 ];
 
 export const DEFAULT_ROOMS: Room[] = [

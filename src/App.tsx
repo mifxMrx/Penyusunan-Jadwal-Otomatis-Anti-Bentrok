@@ -33,6 +33,7 @@ function hydrateState(parsed: AppState): AppState {
     ...parsed,
     teachers: parsed.teachers.map((t, idx) => ({
       ...t,
+      code: /^G\d+$/i.test(t.code.trim()) ? t.code.trim().slice(1) : t.code,
       color: t.color || TEACHER_COLOR_PALETTE[idx % TEACHER_COLOR_PALETTE.length].hex,
     })),
     sessions: (parsed.sessions ?? []).map((s) => ({
