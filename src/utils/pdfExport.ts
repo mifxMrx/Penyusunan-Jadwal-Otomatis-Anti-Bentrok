@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import autoTable, { RowInput } from 'jspdf-autotable';
 import {
   Assignment,
   ExamSession,
@@ -21,7 +21,7 @@ interface ExportPdfParams {
   teacherTotalCounts: Record<string, number>;
 }
 
-export function exportScheduleToPdfA4({
+export function buildSchedulePdfA4({
   identity,
   teachers,
   rooms,
@@ -29,7 +29,7 @@ export function exportScheduleToPdfA4({
   assignments,
   printConfig,
   teacherTotalCounts,
-}: ExportPdfParams): void {
+}: ExportPdfParams): { doc: jsPDF; filename: string } {
   const isLandscape = printConfig.orientation === 'landscape';
   const useColors = printConfig.showColors !== false;
   const doc = new jsPDF({
@@ -146,7 +146,8 @@ export function exportScheduleToPdfA4({
 
     const cellTeacherMap: Array<Array<Teacher | null>> = [];
 
-    const body = filteredSessions.map((session, idx) => {
+    let dayCounter = 0;
+    const body: RowInput[] = filteredSessions.map((session, idx) => {
       const rowTeachers: Array<Teacher | null> = [];
       const roomCells = rooms.map((room) => {
         const names: string[] = [];
@@ -168,11 +169,43 @@ export function exportScheduleToPdfA4({
       });
       cellTeacherMap.push(rowTeachers);
 
+      const isDateGroupStart =
+        idx === 0 || filteredSessions[idx - 1].date !== session.date;
+      let dateRowSpan = 1;
+      if (isDateGroupStart) {
+        dayCounter++;
+        while (
+          idx + dateRowSpan < filteredSessions.length &&
+          filteredSessions[idx + dateRowSpan].date === session.date
+        ) {
+          dateRowSpan++;
+        }
+      }
+
+      const jamCell = `${session.shiftGroup ? `${session.shiftGroup}\n` : ''}Jam ke-${session.sessionNumber}\n${session.timeRange}`;
+      const subjectCell = `${session.subject}${session.gradeLevel ? `\n(${session.gradeLevel})` : ''}`;
+
+      if (isDateGroupStart) {
+        return [
+          {
+            content: String(dayCounter),
+            rowSpan: dateRowSpan,
+            styles: { halign: 'center', valign: 'middle' },
+          },
+          {
+            content: `${session.dayLabel},\n${formatIndonesianDate(session.date, true)}`,
+            rowSpan: dateRowSpan,
+            styles: { valign: 'middle' },
+          },
+          jamCell,
+          subjectCell,
+          ...roomCells,
+        ];
+      }
+
       return [
-        String(idx + 1),
-        `${session.dayLabel},\n${formatIndonesianDate(session.date, true)}`,
-        `${session.shiftGroup ? `${session.shiftGroup}\n` : ''}Jam ke-${session.sessionNumber}\n${session.timeRange}`,
-        `${session.subject}${session.gradeLevel ? `\n(${session.gradeLevel})` : ''}`,
+        jamCell,
+        subjectCell,
         ...roomCells,
       ];
     });
@@ -211,6 +244,7 @@ export function exportScheduleToPdfA4({
             printConfig.displayMode === 'code_with_legend' ? 'center' : 'left';
           if (printConfig.displayMode === 'code_with_legend') {
             data.cell.styles.fontStyle = 'bold';
+            data.cell.styles.fontSize = printConfig.fontSize === 'compact' ? 13 : 16;
           }
           if (useColors) {
             const roomIdx = data.column.index - 4;
@@ -253,11 +287,9 @@ export function exportScheduleToPdfA4({
         legendBody.push([
           left.code,
           left.name,
-          left.nip || '-',
           String(teacherTotalCounts[left.id] ?? 0),
           right ? right.code : '',
           right ? right.name : '',
-          right ? right.nip || '-' : '',
           right ? String(teacherTotalCounts[right.id] ?? 0) : '',
         ]);
       }
@@ -265,13 +297,13 @@ export function exportScheduleToPdfA4({
       autoTable(doc, {
         startY: cursorY,
         margin: { left: marginX, right: marginX },
-        head: [['Kode', 'Nama Pengawas', 'NIP / NUPTK', 'Tugas', 'Kode', 'Nama Pengawas', 'NIP / NUPTK', 'Tugas']],
+        head: [['Kode', 'Nama Pengawas', 'Tugas', 'Kode', 'Nama Pengawas', 'Tugas']],
         body: legendBody,
         theme: 'grid',
         styles: {
           font: 'helvetica',
-          fontSize: 7.2,
-          cellPadding: 1.3,
+          fontSize: 7.5,
+          cellPadding: 1.4,
           textColor: [15, 23, 42],
           lineColor: [148, 163, 184],
           lineWidth: 0.2,
@@ -283,10 +315,10 @@ export function exportScheduleToPdfA4({
           halign: 'center',
         },
         columnStyles: {
-          0: { halign: 'center', fontStyle: 'bold', cellWidth: 11 },
-          3: { halign: 'center', cellWidth: 11 },
-          4: { halign: 'center', fontStyle: 'bold', cellWidth: 11 },
-          7: { halign: 'center', cellWidth: 11 },
+          0: { halign: 'center', fontStyle: 'bold', cellWidth: 12 },
+          2: { halign: 'center', cellWidth: 13 },
+          3: { halign: 'center', fontStyle: 'bold', cellWidth: 12 },
+          5: { halign: 'center', cellWidth: 13 },
         },
         didParseCell: (data) => {
           if (useColors && data.section === 'body') {
@@ -295,7 +327,7 @@ export function exportScheduleToPdfA4({
               const hex = getTeacherColorHex(pair.left, teacherIndexMap.get(pair.left.id) ?? 0);
               data.cell.styles.fillColor = hexToLightTintRgb(hex, 0.2);
               data.cell.styles.textColor = hexToRgbTuple(hex);
-            } else if (data.column.index === 4 && pair?.right) {
+            } else if (data.column.index === 3 && pair?.right) {
               const hex = getTeacherColorHex(pair.right, teacherIndexMap.get(pair.right.id) ?? 0);
               data.cell.styles.fillColor = hexToLightTintRgb(hex, 0.2);
               data.cell.styles.textColor = hexToRgbTuple(hex);
@@ -330,7 +362,7 @@ export function exportScheduleToPdfA4({
       return [
         String(idx + 1),
         teacher.code,
-        `${teacher.name}\nNIP: ${teacher.nip || '-'}`,
+        teacher.name,
         String(myDuties.length),
         myDuties.length > 0 ? myDuties.join('\n') : 'Tidak ada jadwal mengawas',
       ];
@@ -339,7 +371,7 @@ export function exportScheduleToPdfA4({
     autoTable(doc, {
       startY: cursorY,
       margin: { left: marginX, right: marginX },
-      head: [['No', 'Kode', 'Nama Pengawas / NIP', 'Total', 'Rincian Jadwal Mengawas (Hari, Tanggal, Sesi, Jam, Ruang, Mapel)']],
+      head: [['No', 'Kode', 'Nama Pengawas', 'Total', 'Rincian Jadwal Mengawas (Hari, Tanggal, Sesi, Jam, Ruang, Mapel)']],
       body,
       theme: 'grid',
       styles: {
@@ -412,5 +444,24 @@ export function exportScheduleToPdfA4({
 
   const safeTitle = identity.schoolName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   const modeSuffix = printConfig.documentMode === 'matrix' ? 'matriks' : 'per-pengawas';
-  doc.save(`jadwal-mengawas-${safeTitle}-${modeSuffix}-A4.pdf`);
+  return {
+    doc,
+    filename: `jadwal-mengawas-${safeTitle}-${modeSuffix}-A4.pdf`,
+  };
+}
+
+export function exportScheduleToPdfA4(params: ExportPdfParams): void {
+  const { doc, filename } = buildSchedulePdfA4(params);
+  doc.save(filename);
+}
+
+export function createPrintReadyPdfA4(params: ExportPdfParams): {
+  blobUrl: string;
+  filename: string;
+} {
+  const { doc, filename } = buildSchedulePdfA4(params);
+  doc.autoPrint();
+  const blob = doc.output('blob');
+  const blobUrl = URL.createObjectURL(blob);
+  return { blobUrl, filename };
 }

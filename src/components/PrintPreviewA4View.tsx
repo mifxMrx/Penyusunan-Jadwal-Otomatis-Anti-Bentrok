@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { FileDown, Printer } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { FileDown, Printer, X } from 'lucide-react';
 import {
   Assignment,
   ExamSession,
@@ -10,7 +10,7 @@ import {
 } from '../types/schedule';
 import { getTeacherColorHex, hexToRgba } from '../utils/colors';
 import { cellKey, formatIndonesianDate } from '../utils/scheduler';
-import { exportScheduleToPdfA4 } from '../utils/pdfExport';
+import { createPrintReadyPdfA4, exportScheduleToPdfA4 } from '../utils/pdfExport';
 
 interface PrintPreviewA4ViewProps {
   identity: SchoolIdentity;
@@ -65,8 +65,57 @@ export const PrintPreviewA4View: React.FC<PrintPreviewA4ViewProps> = ({
     return sessions.filter((s) => (s.shiftGroup || 'Sesi 1') === activeShiftFilter);
   }, [sessions, activeShiftFilter]);
 
+  const [printFallbackModal, setPrintFallbackModal] = useState<{
+    blobUrl: string;
+    filename: string;
+  } | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (printFallbackModal?.blobUrl) {
+        URL.revokeObjectURL(printFallbackModal.blobUrl);
+      }
+    };
+  }, [printFallbackModal]);
+
+  const closePrintFallbackModal = () => {
+    setPrintFallbackModal(null);
+  };
+
   const handlePrint = () => {
-    window.print();
+    let nativePrintTriggered = false;
+    const onBeforePrint = () => {
+      nativePrintTriggered = true;
+    };
+    window.addEventListener('beforeprint', onBeforePrint);
+
+    try {
+      window.print();
+    } catch {
+      nativePrintTriggered = false;
+    }
+
+    window.setTimeout(() => {
+      window.removeEventListener('beforeprint', onBeforePrint);
+      if (!nativePrintTriggered) {
+        const nextPdf = createPrintReadyPdfA4({
+          identity,
+          teachers,
+          rooms,
+          sessions,
+          assignments,
+          printConfig,
+          teacherTotalCounts,
+        });
+        const link = document.createElement('a');
+        link.href = nextPdf.blobUrl;
+        link.download = nextPdf.filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setPrintFallbackModal(nextPdf);
+      }
+    }, 250);
   };
 
   const handleExportPdf = () => {
@@ -363,18 +412,44 @@ export const PrintPreviewA4View: React.FC<PrintPreviewA4ViewProps> = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {printSessions.map((s, idx) => (
-                    <tr key={s.id}>
-                      <td className="border border-slate-700 px-1.5 py-1 text-center font-mono tabular-nums">
-                        {idx + 1}
-                      </td>
-                      <td className="border border-slate-700 px-2 py-1 leading-tight">
-                        <div className="font-semibold">{s.dayLabel}</div>
-                        <div className="font-mono tabular-nums text-[9.5px]">
-                          {formatIndonesianDate(s.date, true)}
-                        </div>
-                      </td>
-                      <td className="border border-slate-700 px-1.5 py-1 text-center font-mono tabular-nums leading-tight">
+                  {(() => {
+                    let dayCounter = 0;
+                    return printSessions.map((s, idx) => {
+                      const isDateGroupStart =
+                        idx === 0 || printSessions[idx - 1].date !== s.date;
+                      let dateRowSpan = 1;
+                      if (isDateGroupStart) {
+                        dayCounter++;
+                        while (
+                          idx + dateRowSpan < printSessions.length &&
+                          printSessions[idx + dateRowSpan].date === s.date
+                        ) {
+                          dateRowSpan++;
+                        }
+                      }
+
+                      return (
+                        <tr key={s.id}>
+                          {isDateGroupStart && (
+                            <td
+                              rowSpan={dateRowSpan}
+                              className="border border-slate-700 px-1.5 py-1 text-center font-mono tabular-nums align-middle bg-white"
+                            >
+                              {dayCounter}
+                            </td>
+                          )}
+                          {isDateGroupStart && (
+                            <td
+                              rowSpan={dateRowSpan}
+                              className="border border-slate-700 px-2 py-1 leading-tight align-middle bg-white"
+                            >
+                              <div className="font-semibold">{s.dayLabel}</div>
+                              <div className="font-mono tabular-nums text-[9.5px]">
+                                {formatIndonesianDate(s.date, true)}
+                              </div>
+                            </td>
+                          )}
+                          <td className="border border-slate-700 px-1.5 py-1 text-center font-mono tabular-nums leading-tight">
                         {(uniqueShifts.length > 1 || s.shiftGroup) && (
                           <div className="text-[8.5px] font-bold text-slate-700">
                             {s.shiftGroup || 'Sesi 1'}
@@ -415,7 +490,7 @@ export const PrintPreviewA4View: React.FC<PrintPreviewA4ViewProps> = ({
                             key={r.id}
                             className={`border border-slate-700 px-1.5 py-1 ${
                               printConfig.displayMode === 'code_with_legend'
-                                ? 'text-center font-mono font-semibold'
+                                ? 'text-center font-mono font-bold text-[18px] leading-tight'
                                 : 'text-left'
                             }`}
                             style={
@@ -453,8 +528,10 @@ export const PrintPreviewA4View: React.FC<PrintPreviewA4ViewProps> = ({
                           </td>
                         );
                       })}
-                    </tr>
-                  ))}
+                      </tr>
+                    );
+                    });
+                  })()}
                 </tbody>
               </table>
 
@@ -473,9 +550,6 @@ export const PrintPreviewA4View: React.FC<PrintPreviewA4ViewProps> = ({
                         <th className="border border-slate-700 px-2 py-1 text-left">
                           Nama Pengawas
                         </th>
-                        <th className="border border-slate-700 px-2 py-1 text-left">
-                          NIP / NUPTK
-                        </th>
                         <th className="border border-slate-700 px-1.5 py-1 text-center w-11">
                           Tugas
                         </th>
@@ -484,9 +558,6 @@ export const PrintPreviewA4View: React.FC<PrintPreviewA4ViewProps> = ({
                         </th>
                         <th className="border border-slate-700 px-2 py-1 text-left">
                           Nama Pengawas
-                        </th>
-                        <th className="border border-slate-700 px-2 py-1 text-left">
-                          NIP / NUPTK
                         </th>
                         <th className="border border-slate-700 px-1.5 py-1 text-center w-11">
                           Tugas
@@ -525,9 +596,6 @@ export const PrintPreviewA4View: React.FC<PrintPreviewA4ViewProps> = ({
                             <td className="border border-slate-700 px-2 py-0.5">
                               {row.left.name}
                             </td>
-                            <td className="border border-slate-700 px-2 py-0.5 font-mono tabular-nums">
-                              {row.left.nip || '-'}
-                            </td>
                             <td className="border border-slate-700 px-1.5 py-0.5 text-center font-mono tabular-nums">
                               {teacherTotalCounts[row.left.id] ?? 0}
                             </td>
@@ -548,9 +616,6 @@ export const PrintPreviewA4View: React.FC<PrintPreviewA4ViewProps> = ({
                             </td>
                             <td className="border border-slate-700 px-2 py-0.5">
                               {row.right?.name ?? ''}
-                            </td>
-                            <td className="border border-slate-700 px-2 py-0.5 font-mono tabular-nums">
-                              {row.right ? row.right.nip || '-' : ''}
                             </td>
                             <td className="border border-slate-700 px-1.5 py-0.5 text-center font-mono tabular-nums">
                               {row.right ? teacherTotalCounts[row.right.id] ?? 0 : ''}
@@ -579,7 +644,7 @@ export const PrintPreviewA4View: React.FC<PrintPreviewA4ViewProps> = ({
                     Kode
                   </th>
                   <th className="border border-slate-700 px-2 py-1.5 text-left w-52">
-                    Nama Pengawas / NIP
+                    Nama Pengawas
                   </th>
                   <th className="border border-slate-700 px-1.5 py-1.5 text-center w-12">
                     Total
@@ -631,11 +696,8 @@ export const PrintPreviewA4View: React.FC<PrintPreviewA4ViewProps> = ({
                       >
                         {teacher.code}
                       </td>
-                      <td className="border border-slate-700 px-2 py-1.5 align-top">
-                        <div className="font-semibold">{teacher.name}</div>
-                        <div className="text-[9px] font-mono tabular-nums text-slate-600">
-                          NIP. {teacher.nip || '-'}
-                        </div>
+                      <td className="border border-slate-700 px-2 py-1.5 align-top font-semibold">
+                        {teacher.name}
                       </td>
                       <td className="border border-slate-700 px-1.5 py-1.5 text-center font-mono font-semibold tabular-nums align-top">
                         {duties.length}
@@ -690,6 +752,80 @@ export const PrintPreviewA4View: React.FC<PrintPreviewA4ViewProps> = ({
           )}
         </div>
       </div>
+
+      {/* Print Fallback Modal when iframe blocks window.print() */}
+      {printFallbackModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 no-print">
+          <div className="bg-white border border-slate-200 rounded-xl w-full max-w-lg shadow-xl flex flex-col">
+            <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-700 shrink-0">
+                  <Printer className="h-4.5 w-4.5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-slate-900">
+                    PDF Siap Cetak (A4) Telah Disiapkan
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Jendela pratinjau memblokir dialog cetak browser langsung.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={closePrintFallbackModal}
+                className="p-1.5 rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
+                aria-label="Tutup dialog cetak"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-3 text-sm text-slate-700">
+              <p>
+                File{' '}
+                <span className="font-mono text-xs font-semibold text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded">
+                  {printFallbackModal.filename}
+                </span>{' '}
+                telah otomatis diunduh dengan ukuran kertas{' '}
+                <strong>A4 ({isLandscape ? 'Landscape' : 'Portrait'})</strong> dan perintah cetak otomatis.
+              </p>
+              <ul className="list-disc pl-5 space-y-1 text-xs text-slate-600">
+                <li>Buka file PDF hasil unduhan untuk langsung memunculkan dialog Printer.</li>
+                <li>
+                  Atau buka aplikasi di tab baru browser lalu tekan{' '}
+                  <kbd className="font-mono bg-slate-100 border border-slate-300 rounded px-1 py-0.5 text-[11px]">
+                    Ctrl+P
+                  </kbd>{' '}
+                  /{' '}
+                  <kbd className="font-mono bg-slate-100 border border-slate-300 rounded px-1 py-0.5 text-[11px]">
+                    Cmd+P
+                  </kbd>
+                  .
+                </li>
+              </ul>
+            </div>
+
+            <div className="px-5 py-3.5 border-t border-slate-200 flex flex-wrap items-center justify-end gap-2.5 bg-slate-50 rounded-b-xl">
+              <button
+                type="button"
+                onClick={closePrintFallbackModal}
+                className="px-4 py-2 rounded-lg border border-slate-200 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
+              >
+                Tutup
+              </button>
+              <a
+                href={printFallbackModal.blobUrl}
+                download={printFallbackModal.filename}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-700 text-white text-sm font-semibold hover:bg-blue-800"
+              >
+                <FileDown className="h-4 w-4" />
+                Unduh Ulang PDF Cetak (A4)
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
